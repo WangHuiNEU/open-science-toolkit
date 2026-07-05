@@ -1,0 +1,27 @@
+[project]
+name = "open-science"
+version = "0.0.1"
+description = "开源自托管科研 agent，1:1 复现 Claude Science (operon) 架构"
+requires-python = ">=3.10"
+dependencies = [
+    "openai>=1.40",
+    "python-dotenv>=1.0",
+    # 阶段 0：大脑端点 + 有状态内核（operon 同款 Jupyter kernel）。
+    "jupyter-client>=8.0",
+    "ipykernel>=6.0",
+    # 阶段推进时按需加入：
+    #   openhands-sdk / openhands-tools  (运行时底座，==1.31.0，两者版本须一致)
+    #   litellm                        (多后端抽象，OpenHands 依赖)
+    #   mcp                            (数据源 / 溯源 MCP server，阶段 1-2)
+    #   pyyaml                         (解析 SKILL.md / agent metadata，阶段 3-4)
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

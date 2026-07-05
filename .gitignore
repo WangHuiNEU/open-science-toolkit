@@ -1,0 +1,24 @@
+# --- secrets / env ---
+.env
+*.key
+.oauth-tokens/
+
+# --- python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# --- data / artifacts (溯源 DB 与产物不入库) ---
+*.sqlite
+*.db
+artifacts/
+workspace/
+
+# --- os ---
+.DS_Store
+Thumbs.db
+.pmpnn_scratch/

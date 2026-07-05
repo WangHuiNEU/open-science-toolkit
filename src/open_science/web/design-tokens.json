@@ -1,0 +1,60 @@
+{
+  "_source": "Extracted from real Claude Science instance at http://localhost:14420/ on 2026-07-05",
+  "fonts": {
+    "sans": "\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif",
+    "serif": "\"Anthropic Serif\", Georgia, \"Times New Roman\", serif",
+    "mono": "\"Anthropic Mono\", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+    "baseSize": "16px"
+  },
+  "page": {
+    "bg": "rgb(253, 253, 252)",
+    "color": "rgb(18, 18, 18)"
+  },
+  "brand": {
+    "clay": "#d97757",
+    "clayEmphasized": "#c6613f",
+    "heather": "#cbcadb",
+    "plum": "#827dbd",
+    "cactus": "#bcd1ca",
+    "mineral": "#629987",
+    "peach": "#ebc9b7",
+    "black": "#000000"
+  },
+  "radius": "0.25rem",
+  "shadow": {
+    "sm": "0 1px 2px 0 rgb(0 0 0 / .05)",
+    "md": "0 4px 6px -1px rgb(0 0 0 / .1), 0 2px 4px -2px rgb(0 0 0 / .1)",
+    "lg": "0 10px 15px -3px rgb(0 0 0 / .1), 0 4px 6px -4px rgb(0 0 0 / .1)"
+  },
+  "grayRampHSL": {
+    "0": "0 0% 100%", "10": "60 14% 99%", "20": "60 14% 97%", "30": "60 10% 96%",
+    "40": "60 11% 95%", "50": "45 12% 93%", "60": "48 12% 92%", "70": "50 12% 91%",
+    "80": "50 11% 89%", "90": "51 11% 88%", "100": "53 12% 87%", "150": "55 11% 80%",
+    "200": "55 9% 74%", "250": "55 7% 68%", "300": "55 6% 63%", "350": "48 5% 57%",
+    "400": "45 3% 52%", "450": "43 3% 47%", "500": "40 3% 42%", "550": "48 3% 36%",
+    "600": "45 3% 31%", "650": "40 2% 26%", "700": "60 3% 21%", "750": "60 2% 17%",
+    "800": "60 2% 12%", "850": "0 0% 8%", "900": "0 0% 4%"
+  },
+  "grayHex": { "80": "#e7e6e1", "650": "#454442" },
+  "accentRampsHSL_note": "red/orange/yellow/green/aqua/blue/violet/magenta each 0-900 available; key mids: blue-500 '213 68% 45%' (links), green-500 '84 100% 24%' (pass), yellow-400 '39 100% 36%' (warn), red-450 '0 61% 52%' (fail)",
+  "layout": {
+    "sidebarWidthPx": 152,
+    "sidebarResizerValueMax": 20,
+    "contentMaxWidthPx": 760,
+    "messageUserBubble": "right-aligned, gray pill (~gray-40/50), rounded, padded",
+    "messageAssistant": "left-aligned, full-width markdown, no bubble"
+  },
+  "measured": {
+    "userBubble": { "bg": "#efeeeb", "color": "rgb(18,18,18)", "radius": "16px", "padding": "10px 16px", "fontSize": "15px", "maxWidth": "min(85%, 896px)" },
+    "link": { "color": "#184f95", "textDecoration": "none", "fontWeight": "400" },
+    "heading": { "fontFamily": "Anthropic Sans", "fontSize": "18px", "fontWeight": "700", "color": "rgb(18,18,18)" }
+  },
+  "inputBar": {
+    "placeholder": "Ask anything — @ for artifacts, # for sessions, / for skills, Ctrl+K to search...",
+    "controls": ["Add to message (+)", "Session options", "Model: Default", "Start dictation"]
+  },
+  "reviewerFooter": {
+    "format": "Reviewer · No issues found · 1 check",
+    "verdicts": ["pass", "warn", "fail", "inconclusive"]
+  }
+}

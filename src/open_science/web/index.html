@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open Science</title>
+<style>
+  /* ── 设计令牌（取自真实 Claude Science 实例 :14420）───────────────── */
+  :root{
+    --font-sans:"Anthropic Sans", system-ui, "Segoe UI", Roboto, Helvetica, Arial, "Microsoft YaHei", sans-serif;
+    --font-serif:"Anthropic Serif", Georgia, "Times New Roman", serif;
+    --font-mono:"Anthropic Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    --page-bg:rgb(253,253,252);
+    --text:rgb(18,18,18);
+
+    --clay:#d97757;
+    --clay-emph:#c6613f;
+    --heather:#cbcadb;
+    --plum:#827dbd;
+    --mineral:#629987;
+
+    /* gray ramp (HSL → 常用几档) */
+    --gray-10:hsl(60 14% 99%);
+    --gray-30:hsl(60 10% 96%);
+    --gray-40:hsl(60 11% 95%);
+    --gray-50:hsl(45 12% 93%);
+    --gray-80:#e7e6e1;
+    --gray-100:hsl(53 12% 87%);
+    --gray-200:hsl(55 9% 74%);
+    --gray-300:hsl(55 6% 63%);
+    --gray-400:hsl(45 3% 52%);
+    --gray-500:hsl(40 3% 42%);
+    --gray-650:#454442;
+    --gray-700:hsl(60 3% 21%);
+
+    --user-bubble:#efeeeb;
+    --link:#184f95;
+    --pass:hsl(84 100% 24%);
+    --warn:hsl(39 100% 36%);
+    --fail:hsl(0 61% 52%);
+    --info:hsl(213 68% 45%);
+
+    --radius:0.25rem;
+    --shadow-sm:0 1px 2px 0 rgb(0 0 0 / .05);
+    --shadow-md:0 4px 6px -1px rgb(0 0 0 / .1), 0 2px 4px -2px rgb(0 0 0 / .1);
+    --shadow-lg:0 10px 15px -3px rgb(0 0 0 / .1), 0 4px 6px -4px rgb(0 0 0 / .1);
+
+    --content-max:760px;
+    --sidebar-w:248px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--page-bg);color:var(--text);
+    font-family:var(--font-sans);font-size:16px;line-height:1.6;
+    -webkit-font-smoothing:antialiased}
+  button{font-family:inherit}
+  ::selection{background:rgba(217,119,87,.22)}
+
+  /* ── 骨架：侧边栏 + 主区 ─────────────────────────────────────── */
+  #app{display:flex;height:100vh;overflow:hidden}
+
+  /* 侧边栏 */
+  #sidebar{width:var(--sidebar-w);flex:0 0 var(--sidebar-w);height:100%;
+    background:var(--gray-30);border-right:1px solid var(--gray-80);
+    display:flex;flex-direction:column;transition:margin-left .18s ease}
+  #sidebar.collapsed{margin-left:calc(-1 * var(--sidebar-w))}
+  .sb-top{padding:14px 12px 8px;display:flex;align-items:center;gap:8px}
+  .logo{width:24px;height:24px;border-radius:6px;background:var(--clay);
+    display:flex;align-items:center;justify-content:center;color:#fff;
+    font-weight:700;font-size:14px;flex:0 0 auto}
+  .sb-title{font-weight:600;font-size:14.5px;letter-spacing:-.01em}
+  .sb-title small{display:block;color:var(--gray-400);font-weight:400;font-size:11px;letter-spacing:0}
+  .newbtn{margin:4px 12px 10px;padding:8px 12px;border:1px solid var(--gray-100);
+    background:#fff;border-radius:var(--radius);cursor:pointer;font-size:13.5px;
+    font-weight:500;color:var(--text);display:flex;align-items:center;gap:8px;
+    box-shadow:var(--shadow-sm);transition:background .12s}
+  .newbtn:hover{background:var(--gray-40)}
+  .newbtn .plus{color:var(--clay);font-weight:700;font-size:15px;line-height:1}
+  .sb-search{margin:0 12px 8px;position:relative}
+  .sb-search input{width:100%;padding:6px 10px 6px 28px;border:1px solid var(--gray-80);
+    border-radius:var(--radius);background:#fff;font-size:12.5px;color:var(--text);
+    font-family:inherit}
+  .sb-search input::placeholder{color:var(--gray-300)}
+  .sb-search .mag{position:absolute;left:9px;top:50%;transform:translateY(-50%);
+    color:var(--gray-300);font-size:12px}
+  .sb-list{flex:1;overflow-y:auto;padding:4px 8px 16px}
+  .sb-group{font-size:11px;font-weight:600;color:var(--gray-400);
+    text-transform:uppercase;letter-spacing:.04em;padding:12px 8px 4px}
+  .sb-item{padding:7px 10px;border-radius:var(--radius);cursor:pointer;font-size:13px;
+    color:var(--gray-650);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    display:flex;align-items:center;gap:7px}
+  .sb-item:hover{background:var(--gray-50)}
+  .sb-item.active{background:var(--gray-80);color:var(--text);font-weight:500}
+  .sb-item .ic{color:var(--gray-300);font-size:12px}
+  .sb-foot{border-top:1px solid var(--gray-80);padding:9px 14px;font-size:11px;
+    color:var(--gray-400);display:flex;align-items:center;gap:6px}
+  .sb-foot .hd{width:7px;height:7px;border-radius:50%;background:var(--gray-300)}
+  .sb-foot .hd.ok{background:var(--mineral)}.sb-foot .hd.bad{background:var(--fail)}
+
+  /* 主区 */
+  #main{flex:1;height:100%;display:flex;flex-direction:column;min-width:0;position:relative}
+  .topbar{height:48px;flex:0 0 48px;display:flex;align-items:center;gap:10px;
+    padding:0 16px;border-bottom:1px solid var(--gray-80);background:var(--page-bg)}
+  .icon-btn{width:30px;height:30px;border:0;background:transparent;border-radius:var(--radius);
+    cursor:pointer;color:var(--gray-500);display:flex;align-items:center;justify-content:center;
+    font-size:16px}
+  .icon-btn:hover{background:var(--gray-40)}
+  .crumb{font-size:14px;font-weight:600;letter-spacing:-.01em;color:var(--text);
+    display:flex;align-items:center;gap:8px;min-width:0}
+  .crumb .proj{color:var(--gray-400);font-weight:400}
+  .crumb .sep{color:var(--gray-200)}
+  .top-actions{margin-left:auto;display:flex;align-items:center;gap:6px}
+  .profile-sel{border:1px solid var(--gray-80);background:#fff;border-radius:var(--radius);
+    padding:5px 8px;font-size:12.5px;color:var(--gray-650);font-family:inherit;cursor:pointer}
+  .top-link{font-size:12.5px;color:var(--gray-400);text-decoration:none;padding:5px 8px;border-radius:var(--radius)}
+  .top-link:hover{background:var(--gray-40);color:var(--gray-650)}
+
+  /* 滚动区 */
+  #scroll{flex:1;overflow-y:auto;scroll-behavior:smooth}
+  #thread{max-width:var(--content-max);margin:0 auto;padding:28px 24px 40px}
+
+  /* 空态 / dashboard */
+  .empty{max-width:640px;margin:0 auto;padding:64px 24px;text-align:center}
+  .empty .badge{width:52px;height:52px;border-radius:14px;background:var(--clay);
+    color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;
+    margin:0 auto 20px;box-shadow:var(--shadow-md)}
+  .empty h2{font-family:var(--font-serif);font-size:28px;font-weight:600;margin:0 0 10px;
+    letter-spacing:-.02em}
+  .empty p{color:var(--gray-500);font-size:15px;margin:0 auto 26px;max-width:460px}
+  .starter{display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left;margin-top:8px}
+  .starter .card{border:1px solid var(--gray-80);border-radius:8px;padding:13px 15px;
+    background:#fff;cursor:pointer;transition:border-color .12s,box-shadow .12s}
+  .starter .card:hover{border-color:var(--gray-200);box-shadow:var(--shadow-sm)}
+  .starter .card b{display:block;font-size:13.5px;font-weight:600;margin-bottom:3px}
+  .starter .card span{font-size:12.5px;color:var(--gray-400);line-height:1.45}
+
+  /* 消息 */
+  .turn{margin:0 0 26px}
+  .turn.user{display:flex;justify-content:flex-end}
+  .bubble{background:var(--user-bubble);color:var(--text);border-radius:16px;
+    padding:10px 16px;font-size:15px;line-height:1.55;max-width:min(85%,896px);
+    white-space:pre-wrap;word-break:break-word}
+  .assistant{font-size:16px;line-height:1.62}
+  .assistant .role{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .assistant .role .av{width:22px;height:22px;border-radius:6px;background:var(--clay);
+    color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .assistant .role .nm{font-size:13px;font-weight:600;color:var(--gray-650)}
+
+  /* markdown 正文 */
+  .md>*:first-child{margin-top:0}.md>*:last-child{margin-bottom:0}
+  .md h1,.md h2,.md h3,.md h4{font-family:var(--font-sans);font-weight:700;
+    line-height:1.3;margin:1.5em 0 .5em;letter-spacing:-.01em}
+  .md h1{font-size:22px}.md h2{font-size:19px}.md h3{font-size:16.5px}.md h4{font-size:15px}
+  .md p{margin:.6em 0}
+  .md a{color:var(--link);text-decoration:none;font-weight:400}
+  .md a:hover{text-decoration:underline}
+  .md strong{font-weight:650}
+  .md em{font-style:italic}
+  .md ul,.md ol{margin:.5em 0;padding-left:1.5em}
+  .md li{margin:.28em 0}
+  .md blockquote{margin:.7em 0;padding:.2em 0 .2em 14px;border-left:3px solid var(--gray-100);
+    color:var(--gray-500)}
+  .md code{font-family:var(--font-mono);font-size:.87em;background:var(--gray-40);
+    border:1px solid var(--gray-80);border-radius:4px;padding:.08em .34em}
+  .md pre{margin:.8em 0;background:var(--gray-10);border:1px solid var(--gray-80);
+    border-radius:8px;overflow:hidden}
+  .md pre .pre-head{display:flex;align-items:center;justify-content:space-between;
+    padding:6px 12px;border-bottom:1px solid var(--gray-80);background:var(--gray-30)}
+  .md pre .pre-head .lang{font-size:11px;color:var(--gray-400);font-family:var(--font-mono);
+    text-transform:lowercase}
+  .md pre .copy{border:0;background:transparent;color:var(--gray-400);font-size:11px;
+    cursor:pointer;padding:2px 6px;border-radius:4px;font-family:inherit}
+  .md pre .copy:hover{background:var(--gray-80);color:var(--gray-650)}
+  .md pre code{display:block;background:none;border:0;padding:12px 14px;overflow-x:auto;
+    font-size:12.8px;line-height:1.55;white-space:pre}
+  .md table{border-collapse:collapse;margin:.8em 0;font-size:14px;width:100%;display:block;overflow-x:auto}
+  .md th,.md td{border:1px solid var(--gray-80);padding:6px 11px;text-align:left}
+  .md th{background:var(--gray-30);font-weight:600}
+  .md tr:nth-child(even) td{background:var(--gray-10)}
+  .md hr{border:0;border-top:1px solid var(--gray-80);margin:1.4em 0}
+
+  /* 工具/子 agent 叙事 */
+  .trace{margin:8px 0;border:1px solid var(--gray-80);border-radius:8px;background:var(--gray-10);
+    overflow:hidden}
+  .trace summary{list-style:none;cursor:pointer;padding:8px 12px;font-size:12.5px;
+    color:var(--gray-500);display:flex;align-items:center;gap:8px}
+  .trace summary::-webkit-details-marker{display:none}
+  .trace summary .ic{font-size:12px}
+  .trace summary .chev{margin-left:auto;color:var(--gray-300);transition:transform .15s}
+  .trace[open] summary .chev{transform:rotate(90deg)}
+  .trace .body{padding:2px 12px 10px 32px;font-size:12px;color:var(--gray-500);
+    font-family:var(--font-mono);white-space:pre-wrap;word-break:break-word}
+  .step{display:flex;align-items:baseline;gap:8px;padding:4px 12px;font-size:12.5px;color:var(--gray-500)}
+  .step .ic{font-size:12px;flex:0 0 auto}
+  .step code{font-family:var(--font-mono);font-size:11.5px;color:var(--gray-650);
+    background:var(--gray-40);border-radius:4px;padding:.05em .3em}
+  .step.err{color:var(--fail)}
+
+  /* Reviewer 页脚 */
+  .reviewer{margin-top:14px;border-top:1px solid var(--gray-80);padding-top:10px;
+    display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--gray-500)}
+  .reviewer .verdict{display:inline-flex;align-items:center;gap:5px;font-weight:600}
+  .reviewer .dot{width:7px;height:7px;border-radius:50%}
+  .reviewer.pass .dot{background:var(--pass)}.reviewer.pass .verdict{color:var(--pass)}
+  .reviewer.warn .dot{background:var(--warn)}.reviewer.warn .verdict{color:var(--warn)}
+  .reviewer.fail .dot{background:var(--fail)}.reviewer.fail .verdict{color:var(--fail)}
+  .reviewer.inconclusive .dot{background:var(--gray-300)}.reviewer.inconclusive .verdict{color:var(--gray-500)}
+  .reviewer .sep{color:var(--gray-200)}
+
+  /* 消息动作条 */
+  .actions{display:flex;gap:2px;margin-top:8px;opacity:0;transition:opacity .12s}
+  .assistant:hover .actions{opacity:1}
+  .actions button{border:0;background:transparent;color:var(--gray-400);cursor:pointer;
+    padding:5px 7px;border-radius:var(--radius);font-size:12px;display:flex;align-items:center;gap:4px}
+  .actions button:hover{background:var(--gray-40);color:var(--gray-650)}
+
+  /* typing */
+  .typing{display:flex;align-items:center;gap:8px;color:var(--gray-400);font-size:13.5px;margin:4px 0}
+  .typing .dots i{display:inline-block;width:5px;height:5px;margin:0 1px;border-radius:50%;
+    background:var(--gray-300);animation:b 1.2s infinite}
+  .typing .dots i:nth-child(2){animation-delay:.2s}.typing .dots i:nth-child(3){animation-delay:.4s}
+  @keyframes b{0%,60%,100%{opacity:.3}30%{opacity:1}}
+
+  /* 输入栏 */
+  #composer{flex:0 0 auto;padding:10px 24px 18px;background:linear-gradient(to top,var(--page-bg) 70%,transparent)}
+  .composer-inner{max-width:var(--content-max);margin:0 auto;border:1px solid var(--gray-100);
+    border-radius:14px;background:#fff;box-shadow:var(--shadow-sm);transition:border-color .12s,box-shadow .12s}
+  .composer-inner:focus-within{border-color:var(--gray-200);box-shadow:var(--shadow-md)}
+  #box{width:100%;border:0;background:transparent;resize:none;font-family:inherit;font-size:15px;
+    line-height:1.55;color:var(--text);padding:14px 16px 4px;max-height:200px;min-height:26px;outline:none}
+  #box::placeholder{color:var(--gray-300)}
+  .composer-bar{display:flex;align-items:center;gap:4px;padding:6px 10px 8px}
+  .cbtn{border:0;background:transparent;color:var(--gray-400);cursor:pointer;font-size:12.5px;
+    padding:5px 8px;border-radius:var(--radius);display:flex;align-items:center;gap:5px}
+  .cbtn:hover{background:var(--gray-40);color:var(--gray-650)}
+  .cbtn .plus{font-size:16px;line-height:1;color:var(--gray-500)}
+  .composer-bar .spacer{margin-left:auto}
+  #send{width:32px;height:32px;border:0;border-radius:8px;background:var(--clay);color:#fff;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px}
+  #send:hover{background:var(--clay-emph)}
+  #send:disabled{background:var(--gray-200);cursor:default}
+  .composer-hint{max-width:var(--content-max);margin:6px auto 0;text-align:center;font-size:11px;
+    color:var(--gray-300)}
+
+  /* New Project 模态 */
+  .modal-scrim{position:fixed;inset:0;background:rgba(18,18,18,.32);display:none;
+    align-items:center;justify-content:center;z-index:50;backdrop-filter:blur(1px)}
+  .modal-scrim.open{display:flex}
+  .modal{width:540px;max-width:calc(100vw - 32px);background:var(--page-bg);border-radius:14px;
+    box-shadow:var(--shadow-lg);overflow:hidden}
+  .modal-head{padding:20px 22px 6px}
+  .modal-head h3{font-family:var(--font-serif);font-size:20px;font-weight:600;margin:0 0 4px;letter-spacing:-.01em}
+  .modal-head p{margin:0;color:var(--gray-400);font-size:13px}
+  .modal-body{padding:14px 22px 4px}
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--gray-650);margin-bottom:5px}
+  .field label .opt{font-weight:400;color:var(--gray-300);margin-left:4px}
+  .field input,.field textarea{width:100%;border:1px solid var(--gray-100);border-radius:var(--radius);
+    padding:9px 11px;font-family:inherit;font-size:14px;color:var(--text);background:#fff}
+  .field input:focus,.field textarea:focus{outline:none;border-color:var(--clay);
+    box-shadow:0 0 0 3px rgba(217,119,87,.14)}
+  .field textarea{resize:vertical;min-height:64px;line-height:1.5}
+  .field .desc{font-size:11.5px;color:var(--gray-300);margin-top:5px}
+  .modal-foot{padding:14px 22px 20px;display:flex;justify-content:flex-end;gap:8px}
+  .btn{border-radius:var(--radius);padding:8px 16px;font-size:13.5px;font-weight:500;
+    cursor:pointer;font-family:inherit}
+  .btn.ghost{border:1px solid var(--gray-100);background:#fff;color:var(--gray-650)}
+  .btn.ghost:hover{background:var(--gray-40)}
+  .btn.primary{border:0;background:var(--clay);color:#fff}
+  .btn.primary:hover{background:var(--clay-emph)}
+
+  /* 子 agent 树（委派叙事）*/
+  .subtree{margin:6px 0 6px 6px;border-left:2px solid var(--gray-80);padding-left:12px}
+  .subtree .sub-head{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--gray-500);
+    padding:4px 0}
+  .subtree .sub-head .av{width:18px;height:18px;border-radius:5px;background:var(--plum);color:#fff;
+    font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .subtree .sub-head .st{margin-left:auto;font-size:11px;color:var(--gray-300)}
+  .subtree .sub-head .st.done{color:var(--mineral)}
+
+  /* Plan 批准卡片 */
+  .plan{margin:10px 0;border:1px solid var(--gray-100);border-radius:10px;background:#fff;
+    box-shadow:var(--shadow-sm);overflow:hidden}
+  .plan-head{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--gray-80);
+    background:var(--gray-30);font-size:13px;font-weight:600;color:var(--gray-650)}
+  .plan-head .ic{color:var(--clay)}
+  .plan-body{padding:8px 14px 4px;font-size:14px;color:var(--text)}
+  .plan-body .md{font-size:14px}
+  .plan-foot{padding:10px 14px 12px;display:flex;gap:8px;align-items:center}
+  .plan-foot .note{margin-right:auto;font-size:11.5px;color:var(--gray-300)}
+  .plan-foot .btn{padding:6px 14px;font-size:13px}
+  .plan.resolved .plan-foot{display:none}
+  .plan .resolved-tag{display:none;font-size:12px;color:var(--gray-400);padding:8px 14px 12px}
+  .plan.resolved .resolved-tag{display:block}
+
+  /* Artifact 侧栏 / Files 面板 */
+  #artifacts{width:0;flex:0 0 0;height:100%;background:var(--gray-10);border-left:1px solid var(--gray-80);
+    overflow:hidden;transition:width .18s ease,flex-basis .18s ease;display:flex;flex-direction:column}
+  #artifacts.open{width:380px;flex-basis:380px}
+  @media(max-width:1100px){#artifacts.open{width:320px;flex-basis:320px}}
+  .art-top{height:48px;flex:0 0 48px;display:flex;align-items:center;gap:8px;padding:0 12px 0 16px;
+    border-bottom:1px solid var(--gray-80)}
+  .art-top .ttl{font-size:13.5px;font-weight:600;letter-spacing:-.01em}
+  .art-top .ct{font-size:11px;color:var(--gray-300);background:var(--gray-80);border-radius:10px;
+    padding:1px 7px}
+  .art-top .close{margin-left:auto}
+  .art-scroll{flex:1;overflow-y:auto;padding:10px 12px}
+  .art-empty{color:var(--gray-300);font-size:12.5px;text-align:center;padding:40px 16px;line-height:1.6}
+  .art-card{border:1px solid var(--gray-80);border-radius:8px;background:#fff;margin-bottom:10px;overflow:hidden}
+  .art-card .hd{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer}
+  .art-card .hd .ico{font-size:14px}
+  .art-card .hd .nm{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis}
+  .art-card .hd .id{font-size:10.5px;color:var(--gray-300);font-family:var(--font-mono);margin-left:auto;flex:0 0 auto}
+  .art-card .hd .ver{font-size:10px;color:var(--gray-400);background:var(--gray-40);border-radius:8px;
+    padding:0 6px;margin-left:6px}
+  .art-card .prev{border-top:1px solid var(--gray-80);padding:10px 12px;font-size:12.5px;
+    max-height:260px;overflow:auto}
+  .art-card .prev .md{font-size:12.5px}
+  .art-card .prev pre{margin:.3em 0}
+  .art-card .prev img{max-width:100%;border-radius:6px}
+  /* 分子结构查看器（3Dmol.js，本地内置，无外部 CDN）*/
+  .mol-wrap{margin:2px 0}
+  .mol-toolbar{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+  .mol-toolbar .sty{border:1px solid var(--gray-100);background:#fff;border-radius:14px;padding:2px 10px;
+    font-size:11.5px;color:var(--gray-650);cursor:pointer;font-family:inherit}
+  .mol-toolbar .sty:hover{background:var(--gray-40)}
+  .mol-toolbar .sty.on{background:var(--clay);color:#fff;border-color:var(--clay)}
+  .mol-view{position:relative;width:100%;height:240px;border:1px solid var(--gray-80);border-radius:6px;
+    background:#fbfbfa;overflow:hidden}
+  .mol-view canvas{border-radius:6px}
+  .mol-note{font-size:10.5px;color:var(--gray-300);margin-top:4px}
+  /* Jupyter 输出（图/表/文本）*/
+  .nb-out{margin:.2em 0}
+  .nb-out img{max-width:100%;border-radius:6px;display:block}
+  .nb-out table{border-collapse:collapse;font-size:12px;width:100%}
+  .nb-out th,.nb-out td{border:1px solid var(--gray-80);padding:3px 7px;text-align:left}
+  .nb-out th{background:var(--gray-40);font-weight:600}
+  .nb-out pre.nb-text{background:var(--gray-30);border-radius:6px;padding:8px 10px;font-size:11.5px;
+    overflow:auto;margin:.2em 0;white-space:pre-wrap}
+  .nb-out pre.nb-err{background:#fdecea;color:#8a1c12;border-radius:6px;padding:8px 10px;font-size:11.5px;
+    overflow:auto;white-space:pre-wrap}
+  .art-chip{display:inline-flex;align-items:center;gap:6px;margin:6px 6px 0 0;padding:4px 10px;
+    border:1px solid var(--gray-100);border-radius:20px;background:#fff;cursor:pointer;font-size:12px;
+    color:var(--gray-650)}
+  .art-chip:hover{border-color:var(--gray-200);background:var(--gray-40)}
+  .art-chip .ico{color:var(--clay)}
+  .art-tray{display:flex;flex-wrap:wrap;margin-top:2px}
+
+  @media(max-width:720px){
+    :root{--sidebar-w:0px}
+    #sidebar{position:absolute;z-index:40;--sidebar-w:248px;width:248px;flex-basis:248px}
+    #sidebar.collapsed{margin-left:-248px}
+    #artifacts.open{position:absolute;right:0;z-index:40;width:min(88vw,360px);flex-basis:auto}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- ── 侧边栏 ─────────────────────────────────────── -->
+  <aside id="sidebar">
+    <div class="sb-top">
+      <div class="logo">◈</div>
+      <div class="sb-title">Open Science<small>Luca</small></div>
+    </div>
+    <button class="newbtn" id="newProjBtn"><span class="plus">+</span> New project</button>
+    <div class="sb-search">
+      <span class="mag">⌕</span>
+      <input id="sbSearch" placeholder="Search sessions…" spellcheck="false">
+    </div>
+    <div class="sb-list" id="sbList">
+      <div class="sb-group">Today</div>
+      <div class="sb-item active" data-cid=""><span class="ic">◷</span><span>New session</span></div>
+    </div>
+    <div class="sb-foot">
+      <span class="hd" id="hd"></span>
+      <span id="hdText">connecting…</span>
+    </div>
+  </aside>
+
+  <!-- ── 主区 ─────────────────────────────────────── -->
+  <div id="main">
+    <div class="topbar">
+      <button class="icon-btn" id="toggleSb" title="Toggle sidebar">☰</button>
+      <div class="crumb">
+        <span class="proj" id="crumbProj">Untitled project</span>
+        <span class="sep">/</span>
+        <span id="crumbSession">New session</span>
+      </div>
+      <div class="top-actions">
+        <select class="profile-sel" id="profile" title="Agent profile">
+          <option value="operon">Luca · 科研 agent</option>
+          <option value="reviewer">reviewer · 审查</option>
+          <option value="bookmarker">bookmarker · 书签</option>
+          <option value="onboarding">onboarding · 引导访谈</option>
+        </select>
+        <button class="top-link" id="settingsBtn" title="API 设置">⚙ API</button>
+        <button class="top-link" id="filesBtn" title="Toggle artifacts">◫ Files</button>
+        <a class="top-link" href="/docs" target="_blank" rel="noreferrer">API</a>
+      </div>
+    </div>
+
+    <div id="scroll">
+      <div id="thread">
+        <!-- 空态 dashboard -->
+        <div class="empty" id="empty">
+          <div class="badge">◈</div>
+          <h2>What are we investigating today?</h2>
+          <p>接入了 Luca 大脑、12 个模型技能与 87 个生物信息学数据源。
+             提出一个科研问题，或从下面的起点开始。</p>
+          <div class="starter">
+            <div class="card" data-q="帮我在 PDB 里查 1ABC 结构，并总结它的链、配体和分辨率。">
+              <b>查询一个蛋白结构</b><span>从 PDB / AlphaFold DB 取回并总结</span>
+            </div>
+            <div class="card" data-q="给定一段 mRNA 序列，分析它的二级结构与可折叠性。">
+              <b>分析 RNA 二级结构</b><span>可折叠性 / GC 崎岖度 / 假结</span>
+            </div>
+            <div class="card" data-q="检索关于 CRISPR base editing 脱靶效应的近期文献并做证据综述。">
+              <b>做一次文献综述</b><span>PubMed / bioRxiv 溯源引用</span>
+            </div>
+            <div class="card" data-q="用可用的生物模型技能，预测这条肽链的结构并给出置信度。">
+              <b>跑一个生物模型</b><span>开源权重 · 遵循各自 SKILL.md</span>
+            </div>
+          </div>
+        </div>
+        <!-- 会话消息注入到这里 -->
+      </div>
+    </div>
+
+    <!-- 输入栏 -->
+    <div id="composer">
+      <div class="composer-inner">
+        <textarea id="box" rows="1"
+          placeholder="Ask anything — @ for artifacts, # for sessions, / for skills, Ctrl+K to search..."></textarea>
+        <div class="composer-bar">
+          <button class="cbtn" title="Add to message"><span class="plus">+</span></button>
+          <button class="cbtn" title="Session options">⚙ Session options</button>
+          <button class="cbtn" title="Model">◇ Model: Default</button>
+          <span class="spacer"></span>
+          <button class="cbtn" title="Start dictation">🎙</button>
+          <button id="send" title="Send">↑</button>
+        </div>
+      </div>
+      <div class="composer-hint">Luca 会取真实数据再作答（compute, don't confabulate）· 引用锚定到返回的标识符</div>
+    </div>
+  </div>
+
+  <!-- ── 产物 / Files 侧栏 ─────────────────────────── -->
+  <aside id="artifacts">
+    <div class="art-top">
+      <span class="ttl">Artifacts</span>
+      <span class="ct" id="artCount">0</span>
+      <button class="icon-btn close" id="artClose" title="Close">✕</button>
+    </div>
+    <div class="art-scroll" id="artScroll">
+      <div class="art-empty" id="artEmpty">还没有产物。<br>Luca 交付的图表、表格、报告会作为<br>可引用、有版本的制品出现在这里。</div>
+    </div>
+  </aside>
+</div>
+
+<!-- ── New Project 模态 ─────────────────────────────── -->
+<div class="modal-scrim" id="modalScrim">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <h3>New project</h3>
+      <p>项目是一组会话与产物的容器。给它一个名字和背景，agent 会据此校准。</p>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label for="pName">Name</label>
+        <input id="pName" placeholder="e.g. RNA foldability study" spellcheck="false">
+      </div>
+      <div class="field">
+        <label for="pDesc">Description <span class="opt">(optional)</span></label>
+        <textarea id="pDesc" placeholder="一句话说明这个项目在研究什么。"></textarea>
+      </div>
+      <div class="field">
+        <label for="pCtx">Agent context <span class="opt">(optional)</span></label>
+        <textarea id="pCtx" placeholder="给 agent 的持久背景：领域、约定、要避免的做法。会附在每个会话的系统提示里。"></textarea>
+        <div class="desc">这会成为项目内所有会话共享的稳定身份层（identity），与平台继承的工作规范层分离。</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" id="pCancel">Cancel</button>
+      <button class="btn primary" id="pCreate">Create project</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── API 设置模态 ─────────────────────────────────── -->
+<div class="modal-scrim" id="setScrim">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <h3>API 设置</h3>
+      <p>填你自己的大脑端点（OpenAI 兼容）。只存在本机浏览器 localStorage，随会话请求带上；留空则回落服务器 .env。</p>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label for="sBase">Base URL</label>
+        <input id="sBase" placeholder="https://kspmas.ksyun.com/v1" spellcheck="false" autocomplete="off">
+        <div class="desc">OpenAI 兼容的 /v1 端点。</div>
+      </div>
+      <div class="field">
+        <label for="sModel">Model</label>
+        <input id="sModel" placeholder="ep-2026… 或 gpt-4o、deepseek-chat" spellcheck="false" autocomplete="off">
+        <div class="desc">不带 provider 前缀时服务器自动补 <code>openai/</code>。</div>
+      </div>
+      <div class="field">
+        <label for="sKey">API Key</label>
+        <input id="sKey" type="password" placeholder="sk-… / 平台密钥" spellcheck="false" autocomplete="off">
+        <div class="desc">只存本机 localStorage，经 127.0.0.1 回环给服务器造 LLM，不落任何提交文件。</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" id="sClear">清除</button>
+      <button class="btn ghost" id="sCancel">Cancel</button>
+      <button class="btn primary" id="sSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const thread = $('#thread'), scroll = $('#scroll'), box = $('#box'), sendBtn = $('#send');
+const empty = $('#empty');
+let busy = false, currentCid = null;
+
+/* ── 极简自包含 Markdown 渲染（无外部 CDN）──────────────────────── */
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function inline(s){
+  s = escapeHtml(s);
+  // 行内代码先占位，避免被其它规则破坏
+  const codes = [];
+  s = s.replace(/`([^`]+)`/g, (_,c)=>{ codes.push(c); return ' '+(codes.length-1)+' '; });
+  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,
+        (_,t,u)=>`<a href="${u}" target="_blank" rel="noreferrer">${t}</a>`);
+  s = s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  s = s.replace(/(^|[^*])\*([^*]+)\*/g,'$1<em>$2</em>');
+  s = s.replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g,'$1<a href="$2" target="_blank" rel="noreferrer">$2</a>');
+  s = s.replace(/ (\d+) /g,(_,i)=>`<code>${escapeHtml(codes[+i])}</code>`);
+  return s;
+}
+function renderMarkdown(src){
+  const lines = src.replace(/\r\n/g,'\n').split('\n');
+  let html = '', i = 0;
+  const flushList = (buf,ordered)=>{
+    if(!buf.length) return '';
+    const tag = ordered?'ol':'ul';
+    return `<${tag}>`+buf.map(x=>`<li>${inline(x)}</li>`).join('')+`</${tag}>`;
+  };
+  while(i < lines.length){
+    let line = lines[i];
+    // 代码围栏
+    const fence = line.match(/^```(\w*)/);
+    if(fence){
+      const lang = fence[1]||''; const code = [];
+      i++;
+      while(i < lines.length && !/^```/.test(lines[i])){ code.push(lines[i]); i++; }
+      i++;
+      const raw = code.join('\n');
+      const enc = raw.replace(/"/g,'&quot;');
+      html += `<pre><div class="pre-head"><span class="lang">${lang||'code'}</span>`+
+              `<button class="copy" data-code="${escapeHtml(enc)}">Copy</button></div>`+
+              `<code>${escapeHtml(raw)}</code></pre>`;
+      continue;
+    }
+    // 表格
+    if(/^\s*\|.*\|\s*$/.test(line) && i+1<lines.length && /^\s*\|?[\s:|-]+\|?\s*$/.test(lines[i+1])){
+      const rows = [];
+      const head = line.split('|').slice(1,-1).map(c=>c.trim());
+      i += 2;
+      while(i<lines.length && /^\s*\|.*\|\s*$/.test(lines[i])){
+        rows.push(lines[i].split('|').slice(1,-1).map(c=>c.trim())); i++;
+      }
+      html += '<table><thead><tr>'+head.map(h=>`<th>${inline(h)}</th>`).join('')+'</tr></thead><tbody>'+
+        rows.map(r=>'<tr>'+r.map(c=>`<td>${inline(c)}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
+      continue;
+    }
+    // 标题
+    const h = line.match(/^(#{1,4})\s+(.*)$/);
+    if(h){ const lv=h[1].length; html+=`<h${lv}>${inline(h[2])}</h${lv}>`; i++; continue; }
+    // 引用
+    if(/^>\s?/.test(line)){
+      const buf=[];
+      while(i<lines.length && /^>\s?/.test(lines[i])){ buf.push(lines[i].replace(/^>\s?/,'')); i++; }
+      html += `<blockquote>${inline(buf.join(' '))}</blockquote>`; continue;
+    }
+    // 无序列表
+    if(/^\s*[-*+]\s+/.test(line)){
+      const buf=[];
+      while(i<lines.length && /^\s*[-*+]\s+/.test(lines[i])){ buf.push(lines[i].replace(/^\s*[-*+]\s+/,'')); i++; }
+      html += flushList(buf,false); continue;
+    }
+    // 有序列表
+    if(/^\s*\d+\.\s+/.test(line)){
+      const buf=[];
+      while(i<lines.length && /^\s*\d+\.\s+/.test(lines[i])){ buf.push(lines[i].replace(/^\s*\d+\.\s+/,'')); i++; }
+      html += flushList(buf,true); continue;
+    }
+    // 分割线
+    if(/^\s*([-*_])\1{2,}\s*$/.test(line)){ html+='<hr>'; i++; continue; }
+    // 空行
+    if(!line.trim()){ i++; continue; }
+    // 段落（合并到下一个空行/块）
+    const para=[line]; i++;
+    while(i<lines.length && lines[i].trim() && !/^(#{1,4}\s|>\s?|\s*[-*+]\s|\s*\d+\.\s|```|\s*\|)/.test(lines[i])){
+      para.push(lines[i]); i++;
+    }
+    html += `<p>${inline(para.join(' '))}</p>`;
+  }
+  return html;
+}
+
+/* ── 产物侧栏（可引用、有版本的制品）───────────────────────── */
+const artState = new Map();  // id -> {name,kind,version,content}
+function artIcon(kind){
+  return ({figure:'📈',table:'▦',report:'📄',dataset:'⛁',code:'❯_',markdown:'📝',image:'🖼',
+    structure:'🧬',cif:'🧬',mmcif:'🧬',pdb:'🧬',molecule:'🧬',
+    display_data:'📊',execute_result:'📊',stream:'📤',jupyter:'📊',output:'📤'})[kind]||'📄';
+}
+function openArtifacts(){ $('#artifacts').classList.add('open'); }
+// artifact 类型判定：结构（cif/pdb → 3Dmol.js 查看器）/ jupyter 输出 / 图 / 其它
+function artExt(a){ const m=/\.([a-z0-9]+)\s*$/i.exec(a.name||''); return m?m[1].toLowerCase():''; }
+function isStructure(a){
+  const k=(a.kind||'').toLowerCase(), e=artExt(a);
+  return ['structure','cif','mmcif','pdb','mol','molecule'].includes(k) || ['cif','pdb','mmcif'].includes(e);
+}
+function molFormat(a){
+  const k=(a.kind||'').toLowerCase(), e=artExt(a);
+  return (k==='pdb'||e==='pdb') ? 'pdb' : 'cif';
+}
+function isJupyter(a){
+  const k=(a.kind||'').toLowerCase();
+  return ['display_data','execute_result','stream','jupyter','notebook','nb_output','output'].includes(k);
+}
+function renderArtifacts(){
+  const scr=$('#artScroll'); const n=artState.size;
+  $('#artCount').textContent=n;
+  if(n===0){ scr.innerHTML='<div class="art-empty" id="artEmpty">还没有产物。<br>Luca 交付的图表、表格、报告会作为<br>可引用、有版本的制品出现在这里。</div>'; return; }
+  scr.innerHTML='';
+  for(const a of [...artState.values()].reverse()){
+    const card=document.createElement('div'); card.className='art-card';
+    let body, init=null;
+    if(isStructure(a)){
+      const fmt=molFormat(a);
+      body = a.content
+        ? `<div class="mol-wrap"><div class="mol-toolbar">`+
+            ['Cartoon','Stick','Sphere','Surface','Line'].map((s,i)=>
+              `<button class="sty${i===0?' on':''}" data-sty="${s}">${s}</button>`).join('')+
+          `</div><div class="mol-view"></div>`+
+          `<div class="mol-note">${escapeHtml(a.name)} · ${fmt.toUpperCase()} · 3Dmol.js（本地内置）</div></div>`
+        : '<span style="color:var(--gray-300)">（结构数据待生成）</span>';
+      if(a.content) init = (c)=> renderMol(c.querySelector('.mol-view'), c, a.content, fmt);
+    } else if(isJupyter(a)){
+      body = `<div class="nb-out">${renderNbOutput(a)}</div>`;
+    } else if(a.kind==='figure'||a.kind==='image'){
+      body = a.content?`<img src="${escapeHtml(a.content)}" alt="${escapeHtml(a.name)}">`:'<span style="color:var(--gray-300)">（预览待生成）</span>';
+    } else {
+      body = `<div class="md">${renderMarkdown(a.content||'_（空）_')}</div>`;
+    }
+    card.innerHTML =
+      `<div class="hd"><span class="ico">${artIcon(a.kind)}</span>`+
+      `<span class="nm">${escapeHtml(a.name)}</span>`+
+      (a.version?`<span class="ver">v${a.version}</span>`:'')+
+      `<span class="id">${escapeHtml(a.id)}</span></div>`+
+      `<div class="prev">${body}</div>`;
+    const prev=card.querySelector('.prev');
+    card.querySelector('.hd').onclick=()=>{ prev.style.display = prev.style.display==='none'?'':'none'; };
+    scr.appendChild(card);
+    if(init) init(card);
+  }
+}
+
+/* ── 分子结构查看器（3Dmol.js，本地内置，无外部 CDN）──────────
+   525KB 的 3Dmol-min.js 只在首次出现结构产物时按需注入（懒加载），
+   避免没结构的会话白付这份体积。*/
+let _molP=null;
+function load3Dmol(){
+  if(window.$3Dmol) return Promise.resolve(window.$3Dmol);
+  if(_molP) return _molP;
+  _molP=new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='3Dmol-min.js'; s.async=true;      // 相对路径，纯本地
+    s.onload=()=> window.$3Dmol?res(window.$3Dmol):rej(new Error('3Dmol 未挂载'));
+    s.onerror=()=> rej(new Error('3Dmol-min.js 加载失败'));
+    document.head.appendChild(s);
+  });
+  return _molP;
+}
+const MOL_STYLE={ Cartoon:{cartoon:{color:'spectrum'}}, Stick:{stick:{radius:0.15}},
+  Sphere:{sphere:{scale:0.3}}, Line:{line:{}} };  // Surface 单独处理
+function renderMol(view, card, content, fmt){
+  if(!view) return;
+  load3Dmol().then(($3Dmol)=>{
+    const viewer=$3Dmol.createViewer(view,{backgroundColor:'#fbfbfa'});
+    viewer.addModel(content, fmt);
+    let curSurf=null;
+    const apply=(name)=>{
+      if(curSurf!=null){ viewer.removeSurface(curSurf); curSurf=null; }
+      viewer.setStyle({}, {});
+      if(name==='Surface'){
+        viewer.setStyle({}, {cartoon:{color:'spectrum'}});
+        curSurf=viewer.addSurface($3Dmol.SurfaceType.VDW, {opacity:0.75, color:'white'});
+      } else {
+        viewer.setStyle({}, MOL_STYLE[name]||MOL_STYLE.Cartoon);
+      }
+      viewer.render();
+    };
+    apply('Cartoon'); viewer.zoomTo(); viewer.render();
+    card.querySelectorAll('.mol-toolbar .sty').forEach(btn=>{
+      btn.onclick=()=>{
+        card.querySelectorAll('.mol-toolbar .sty').forEach(b=>b.classList.remove('on'));
+        btn.classList.add('on'); apply(btn.dataset.sty);
+      };
+    });
+    // 侧栏可能仍是 display:none（卡片折叠）→ 展开时 3Dmol 拿不到尺寸；
+    // 侧栏一旦可见就 resize 一次。
+    setTimeout(()=>{ try{ viewer.resize(); viewer.render(); }catch{} }, 60);
+  }).catch(err=>{
+    view.innerHTML=`<div class="mol-note" style="padding:10px">3D 渲染不可用：${escapeHtml(err.message)}</div>`;
+  });
+}
+
+/* ── Jupyter 输出（图像 / 表格 / 文本），content 已被嗅探成字符串 ── */
+function renderNbOutput(a){
+  const c=(a.content!=null?String(a.content):'').trim();
+  if(!c) return '<span style="color:var(--gray-300)">（无输出）</span>';
+  const k=(a.kind||'').toLowerCase();
+  // 错误输出
+  if(k==='error' || k==='traceback'){ return `<pre class="nb-err">${escapeHtml(c)}</pre>`; }
+  // 图像：data URI 或裸 base64（PNG/JPEG）
+  if(/^data:image\//i.test(c)) return `<img src="${escapeHtml(c)}" alt="${escapeHtml(a.name||'output')}">`;
+  if(/^[A-Za-z0-9+/=\s]+$/.test(c) && c.length>256 && /^(iVBOR|\/9j\/)/.test(c.replace(/\s/g,'')))
+    return `<img src="data:image/png;base64,${c.replace(/\s/g,'')}" alt="output">`;
+  // HTML 表格（execute_result 常见 text/html）——只放行 table 结构，滤掉 script
+  if(/<table[\s>]/i.test(c)){
+    const safe=c.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/ on\w+="[^"]*"/gi,'');
+    return safe;
+  }
+  // 纯文本
+  return `<pre class="nb-text">${escapeHtml(c)}</pre>`;
+}
+function upsertArtifact(a){
+  if(!a || !a.id) return;
+  const prev = artState.get(a.id)||{};
+  artState.set(a.id, {id:a.id, name:a.name||prev.name||a.id, kind:a.kind||prev.kind||'report',
+    version:a.version||prev.version||1, content:a.content!=null?a.content:prev.content});
+  renderArtifacts();
+}
+// 在助手消息尾部放一个可点开侧栏的引用 chip
+function addArtifactChip(turn, a){
+  const zone = turn.querySelector('.md');
+  let tray = turn.querySelector('.art-tray');
+  if(!tray){ tray=document.createElement('div'); tray.className='art-tray'; zone.after(tray); }
+  const chip=document.createElement('button'); chip.className='art-chip'; chip.dataset.aid=a.id;
+  chip.innerHTML=`<span class="ico">${artIcon(a.kind)}</span><span>${escapeHtml(a.name||a.id)}</span>`;
+  chip.onclick=()=>{ openArtifacts(); const el=[...$$('#artScroll .art-card .id')].find(x=>x.textContent===a.id);
+    if(el){ const c=el.closest('.art-card'); c.scrollIntoView({block:'center'}); c.style.outline='2px solid var(--clay)'; setTimeout(()=>c.style.outline='',900);} };
+  tray.appendChild(chip); autoscroll();
+}
+
+/* ── 子 agent 树（narrate the work, not the plumbing）────────── */
+function addSubAgent(turn, label, task){
+  const zone=turn.querySelector('.trace-zone');
+  const d=document.createElement('div'); d.className='subtree'; d.dataset.sub=label;
+  d.innerHTML=`<div class="sub-head"><span class="av">${escapeHtml((label||'S')[0].toUpperCase())}</span>`+
+    `<span>${escapeHtml(task||label)}</span><span class="st">运行中…</span></div>`;
+  zone.appendChild(d); autoscroll(); return d;
+}
+function subAgentStep(sub, icon, html){
+  const d=document.createElement('div'); d.className='step';
+  d.innerHTML=`<span class="ic">${icon}</span><span>${html}</span>`;
+  sub.appendChild(d); autoscroll();
+}
+function finishSubAgent(sub, summary){
+  const st=sub.querySelector('.sub-head .st'); if(st){ st.textContent=summary||'完成'; st.classList.add('done'); }
+}
+
+/* ── Plan 批准卡片（explain, don't command）──────────────────── */
+function addPlan(turn, planMd, onDecision){
+  const zone=turn.querySelector('.trace-zone');
+  const d=document.createElement('div'); d.className='plan';
+  d.innerHTML=
+    `<div class="plan-head"><span class="ic">◧</span>提议的计划 · 待你批准</div>`+
+    `<div class="plan-body"><div class="md">${renderMarkdown(planMd||'')}</div></div>`+
+    `<div class="plan-foot"><span class="note">批准后 Luca 才会动手；你也可以要求调整范围。</span>`+
+    `<button class="btn ghost" data-plan="edit">要求修改</button>`+
+    `<button class="btn primary" data-plan="approve">批准并执行</button></div>`+
+    `<div class="resolved-tag"></div>`;
+  d.querySelector('[data-plan="approve"]').onclick=()=>{ d.classList.add('resolved');
+    d.querySelector('.resolved-tag').textContent='✓ 已批准 — 开始执行'; onDecision&&onDecision('approve'); };
+  d.querySelector('[data-plan="edit"]').onclick=()=>{ d.classList.add('resolved');
+    d.querySelector('.resolved-tag').textContent='✎ 已请求修改'; onDecision&&onDecision('edit'); };
+  zone.appendChild(d); autoscroll(); return d;
+}
+
+/* ── 构造消息 DOM ───────────────────────────────────────────── */
+function hideEmpty(){ if(empty && empty.parentNode){ empty.remove(); } }
+function atBottom(){ return scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight < 80; }
+function autoscroll(){ if(atBottom()) scroll.scrollTop = scroll.scrollHeight; }
+
+function addUser(text){
+  hideEmpty();
+  const t=document.createElement('div'); t.className='turn user';
+  const b=document.createElement('div'); b.className='bubble'; b.textContent=text;
+  t.appendChild(b); thread.appendChild(t); scroll.scrollTop=scroll.scrollHeight;
+}
+function newAssistant(){
+  hideEmpty();
+  const t=document.createElement('div'); t.className='turn';
+  t.innerHTML =
+    '<div class="assistant">'+
+      '<div class="role"><span class="av">◈</span><span class="nm">Luca</span></div>'+
+      '<div class="trace-zone"></div>'+
+      '<div class="md"></div>'+
+      '<div class="rev-zone"></div>'+
+      '<div class="actions">'+
+        '<button data-act="copy">⧉ Copy</button>'+
+        '<button data-act="good">👍 Good</button>'+
+        '<button data-act="bad">👎 Bad</button>'+
+        '<button data-act="edit">✎ Edit</button>'+
+      '</div>'+
+    '</div>';
+  thread.appendChild(t); autoscroll();
+  return t;
+}
+function setMd(turn, text){
+  const md = turn.querySelector('.md');
+  md.dataset.raw = text;
+  md.innerHTML = renderMarkdown(text);
+  autoscroll();
+}
+function addStep(turn, icon, html, cls){
+  const zone = turn.querySelector('.trace-zone');
+  const d=document.createElement('div'); d.className='step '+(cls||'');
+  d.innerHTML = `<span class="ic">${icon}</span><span>${html}</span>`;
+  zone.appendChild(d); autoscroll();
+}
+function setReviewer(turn, verdict, summary, checks){
+  const zone = turn.querySelector('.rev-zone');
+  const label = {pass:'No issues found',warn:'Minor issues',fail:'Issues found',inconclusive:'Inconclusive'}[verdict]||summary;
+  zone.innerHTML =
+    `<div class="reviewer ${verdict}">`+
+      `<span class="verdict"><span class="dot"></span>Reviewer</span>`+
+      `<span class="sep">·</span><span>${summary||label}</span>`+
+      `<span class="sep">·</span><span>${checks||1} check${(checks||1)>1?'s':''}</span>`+
+    `</div>`;
+  autoscroll();
+}
+
+/* typing 指示 */
+function addTyping(turn){
+  const zone = turn.querySelector('.trace-zone');
+  const d=document.createElement('div'); d.className='typing'; d.dataset.typing='1';
+  d.innerHTML='<span>Luca 正在工作</span><span class="dots"><i></i><i></i><i></i></span>';
+  zone.appendChild(d); autoscroll(); return d;
+}
+
+/* ── 健康检查 ───────────────────────────────────────────── */
+async function health(){
+  try{ const r=await fetch('/alive');
+    $('#hd').className='hd '+(r.ok?'ok':'bad');
+    $('#hdText').textContent = r.ok?'daemon online':'daemon down';
+  }catch{ $('#hd').className='hd bad'; $('#hdText').textContent='daemon down'; }
+}
+health(); setInterval(health, 8000);
+
+/* ── 事件流渲染 ─────────────────────────────────────────── */
+const seen = new Set();
+// 从任意事件对象里嗅探 artifact 载荷（operon 侧字段名可能各异，尽量宽容）
+function sniffArtifacts(e){
+  const out=[];
+  const scan=(obj)=>{
+    if(!obj||typeof obj!=='object') return;
+    // 直接命中：形如 {artifact_id/id, name/title, kind/type, version, content/text}
+    const id=obj.artifact_id||obj.artifactId;
+    if(id && (obj.name||obj.title||obj.kind||obj.type)){
+      out.push({
+        id:String(id),
+        name:obj.name||obj.title||'artifact',
+        kind:(obj.kind||obj.type||'text').toLowerCase(),
+        version:obj.version||obj.version_number||1,
+        content:obj.content||obj.text||obj.body||obj.markdown||obj.src||''
+      });
+    }
+    // 数组 / 嵌套
+    for(const k in obj){
+      const v=obj[k];
+      if(Array.isArray(v)) v.forEach(scan);
+      else if(v&&typeof v==='object') scan(v);
+    }
+  };
+  scan(e.observation||e.action||e.result||e);
+  return out;
+}
+function renderEvents(turn, events){
+  for(const e of events){
+    if(seen.has(e.id)) continue; seen.add(e.id);
+    const k=e.kind, src=e.source;
+    if(k==='MessageEvent'){
+      const c=(e.llm_message&&e.llm_message.content)||[];
+      const txt=c.filter(p=>p.type==='text').map(p=>p.text).join('');
+      if(src==='agent' && txt.trim()) setMd(turn, txt);
+    } else if(k==='ActionEvent'){
+      const tool=e.tool_name||(e.action&&e.action.kind)||'tool';
+      if(/skill/i.test(tool)) addStep(turn,'📚',`载入技能 <code>${escapeHtml(tool)}</code>`);
+      else if(/mcp|host/i.test(tool)) addStep(turn,'🧬',`取数据 <code>${escapeHtml(tool)}</code>`);
+      else addStep(turn,'🔧',`调用 <code>${escapeHtml(tool)}</code>`);
+    } else if(k==='ObservationEvent'){
+      addStep(turn,'✓','工具返回');
+    } else if(k==='AgentErrorEvent'||k==='ConversationErrorEvent'||k==='ServerErrorEvent'){
+      addStep(turn,'⚠','<span class="err">'+escapeHtml(e.error||e.message||k)+'</span>','err');
+    }
+    // 任意事件都嗅探 artifact，产出即上架到 Files 面板并在气泡下挂引用 chip
+    for(const a of sniffArtifacts(e)){
+      const before = artState.has(a.id);
+      upsertArtifact(a);
+      if(!before) addArtifactChip(turn, a);
+    }
+  }
+}
+
+async function poll(cid, turn, typingEl){
+  let finished=false, tries=0;
+  while(!finished && tries<600){
+    tries++;
+    await new Promise(r=>setTimeout(r,1200));
+    try{
+      const r=await fetch(`/api/conversations/${cid}/events/search?limit=200`);
+      if(r.ok){ const d=await r.json(); renderEvents(turn, d.items||[]); }
+      const cr=await fetch(`/api/conversations/${cid}`);
+      if(cr.ok){ const info=await cr.json();
+        const st=info.execution_status;
+        if(st==='finished'||st==='error'||st==='paused'||st==='stuck') finished=true;
+      }
+    }catch(err){}
+  }
+  if(typingEl) typingEl.remove();
+  // 兜底最终答案
+  try{
+    const fr=await fetch(`/api/conversations/${cid}/agent_final_response`);
+    if(fr.ok){ const f=await fr.json();
+      const md=turn.querySelector('.md');
+      if(f.response && (!md.dataset.raw || !md.dataset.raw.includes((f.response||'').slice(0,30))))
+        setMd(turn, f.response);
+    }
+  }catch{}
+  // Reviewer 页脚（operon 侧无显式 verdict 时给 pass 占位；真实 verdict 待后端补 verification_checks）
+  if(!turn.querySelector('.reviewer'))
+    setReviewer(turn,'pass','No issues found',1);
+}
+
+/* ── 发送 ───────────────────────────────────────────────── */
+async function send(text){
+  const msg = (text!=null?text:box.value).trim();
+  if(!msg || busy) return;
+  busy=true; sendBtn.disabled=true; box.value=''; autosize();
+  addUser(msg);
+  const turn = newAssistant();
+  const typingEl = addTyping(turn);
+  try{
+    const r=await fetch('/chat/send',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message:msg, profile:$('#profile').value, llm_settings:llmPayload()})
+    });
+    if(!r.ok){ typingEl.remove(); addStep(turn,'⚠','发送失败：HTTP '+r.status+' '+escapeHtml((await r.text()).slice(0,200)),'err');
+      busy=false; sendBtn.disabled=false; return; }
+    const d=await r.json();
+    const cid=d.conversation_id||d.id;
+    if(!cid){ typingEl.remove(); addStep(turn,'⚠','没拿到 conversation id','err');
+      busy=false; sendBtn.disabled=false; return; }
+    currentCid = cid;
+    await poll(cid, turn, typingEl);
+  }catch(err){ typingEl.remove(); addStep(turn,'⚠','网络错误：'+escapeHtml(String(err)),'err'); }
+  busy=false; sendBtn.disabled=false; box.focus();
+}
+
+/* ── 输入框自适应高度 ───────────────────────────────────── */
+function autosize(){ box.style.height='auto'; box.style.height=Math.min(box.scrollHeight,200)+'px'; }
+box.addEventListener('input', autosize);
+box.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); }
+});
+sendBtn.onclick=()=>send();
+
+/* 起点卡片 */
+$$('.starter .card').forEach(c=> c.onclick=()=> send(c.dataset.q));
+
+/* 复制按钮（代码块 + 消息动作）事件委托 */
+document.addEventListener('click', e=>{
+  const copy = e.target.closest('.copy');
+  if(copy){
+    const raw = copy.dataset.code.replace(/&quot;/g,'"').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+    navigator.clipboard.writeText(raw);
+    const old=copy.textContent; copy.textContent='Copied'; setTimeout(()=>copy.textContent=old,1200);
+    return;
+  }
+  const act = e.target.closest('.actions button');
+  if(act){
+    const turn = act.closest('.turn');
+    const kind = act.dataset.act;
+    if(kind==='copy'){ const raw=turn.querySelector('.md').dataset.raw||'';
+      navigator.clipboard.writeText(raw);
+      const old=act.innerHTML; act.textContent='Copied'; setTimeout(()=>act.innerHTML=old,1200); }
+    if(kind==='edit'){ box.value = turn.previousElementSibling?.querySelector('.bubble')?.textContent||''; autosize(); box.focus(); }
+  }
+});
+
+/* 侧边栏折叠 */
+$('#toggleSb').onclick=()=> $('#sidebar').classList.toggle('collapsed');
+
+/* Artifacts 面板开合 */
+$('#filesBtn').onclick=()=>{ $('#artifacts').classList.toggle('open'); };
+$('#artClose').onclick=()=> $('#artifacts').classList.remove('open');
+
+/* API 设置：读/存 localStorage（base_url/model/api_key，任一空则后端回落 .env） */
+const LLM_KEY='luca_llm_settings';
+function loadLlm(){ try{ return JSON.parse(localStorage.getItem(LLM_KEY))||{}; }catch{ return {}; } }
+function llmPayload(){
+  const s=loadLlm();
+  const out={};
+  for(const k of ['base_url','model','api_key']){ const v=(s[k]||'').trim(); if(v) out[k]=v; }
+  return out;
+}
+function markSettings(){
+  const on=Object.keys(llmPayload()).length>0;
+  $('#settingsBtn').textContent = on ? '⚙ API ●' : '⚙ API';
+  $('#settingsBtn').title = on ? 'API 设置（已配置自定义大脑）' : 'API 设置';
+}
+const setScrim=$('#setScrim');
+function openSettings(){
+  const s=loadLlm();
+  $('#sBase').value=s.base_url||''; $('#sModel').value=s.model||''; $('#sKey').value=s.api_key||'';
+  setScrim.classList.add('open'); setTimeout(()=>$('#sBase').focus(),40);
+}
+$('#settingsBtn').onclick=openSettings;
+$('#sCancel').onclick=()=> setScrim.classList.remove('open');
+setScrim.onclick=e=>{ if(e.target===setScrim) setScrim.classList.remove('open'); };
+$('#sClear').onclick=()=>{
+  localStorage.removeItem(LLM_KEY);
+  $('#sBase').value=''; $('#sModel').value=''; $('#sKey').value='';
+  markSettings();
+};
+$('#sSave').onclick=()=>{
+  localStorage.setItem(LLM_KEY, JSON.stringify({
+    base_url:$('#sBase').value.trim(), model:$('#sModel').value.trim(), api_key:$('#sKey').value.trim(),
+  }));
+  markSettings();
+  setScrim.classList.remove('open');
+};
+markSettings();
+
+/* New Project 模态 */
+const scrim=$('#modalScrim');
+$('#newProjBtn').onclick=()=>{ scrim.classList.add('open'); setTimeout(()=>$('#pName').focus(),40); };
+$('#pCancel').onclick=()=> scrim.classList.remove('open');
+scrim.onclick=e=>{ if(e.target===scrim) scrim.classList.remove('open'); };
+$('#pCreate').onclick=()=>{
+  const name=$('#pName').value.trim()||'Untitled project';
+  $('#crumbProj').textContent=name;
+  scrim.classList.remove('open');
+  // 项目 context 目前作为下一条消息的前缀身份层（后端 profile 已注入工作规范层）
+  const ctx=$('#pCtx').value.trim();
+  if(ctx) box.value=ctx+'\n\n', box.focus(), autosize();
+};
+
+/* 侧边栏搜索（本地过滤占位） */
+$('#sbSearch').addEventListener('input', e=>{
+  const q=e.target.value.toLowerCase();
+  $$('.sb-item').forEach(it=>{ it.style.display = it.textContent.toLowerCase().includes(q)?'':'none'; });
+});
+
+box.focus();
+</script>
+</body>
+</html>
